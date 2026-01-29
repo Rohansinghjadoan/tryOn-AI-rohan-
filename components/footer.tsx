@@ -18,7 +18,7 @@ export function Footer() {
               href="mailto:hello@tryonai.com"
               className="text-sm text-foreground hover:text-primary transition-colors"
             >
-              hello@tryonai.com
+              cashishh38@gmail.com
             </a>
           </div>
         </div>
