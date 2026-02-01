@@ -233,7 +233,7 @@ export function DemoSection() {
                 <div className="aspect-square bg-muted/50 rounded-xl flex flex-col items-center justify-center p-6 border-2 border-border">
                   {status?.output_image_url ? (
                     <img
-                      src={TryOnAPIClient.getImageURL(status.output_image_url)}
+                      src={status.output_image_url}
                       alt="Output"
                       className="w-full h-full object-cover rounded-lg"
                     />

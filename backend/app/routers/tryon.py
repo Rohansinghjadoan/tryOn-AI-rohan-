@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas import (
@@ -17,6 +17,35 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/tryon", tags=["try-on"])
+
+
+def build_absolute_url(request: Request, relative_url: str | None) -> str | None:
+    """
+    Convert relative URL to absolute URL using request's base URL.
+    
+    Example:
+      Input:  /uploads/outputs/abc.jpg
+      Output: https://my-backend.onrender.com/uploads/outputs/abc.jpg
+    
+    Note: Removes /api prefix from base_url since static files are mounted at root
+    """
+    if not relative_url:
+        return None
+    
+    # If already absolute URL, return as-is
+    if relative_url.startswith(('http://', 'https://')):
+        return relative_url
+    
+    # Get base URL from request (e.g., "https://my-backend.onrender.com/api/")
+    base_url = str(request.base_url).rstrip('/')
+    
+    # Remove /api suffix if present (static files are mounted at root /uploads)
+    # request.base_url for /api/tryon/sessions would be: https://domain.com/api/
+    if base_url.endswith('/api'):
+        base_url = base_url[:-4]  # Remove last 4 characters (/api)
+    
+    # Combine base URL with relative path
+    return f"{base_url}{relative_url}"
 
 
 @router.post("/sessions", response_model=UploadResponse, status_code=201)
@@ -75,6 +104,7 @@ async def create_tryon_session(
 @router.get("/sessions/{session_id}", response_model=TryOnSessionStatusResponse)
 async def get_session_status(
     session_id: uuid.UUID,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """
@@ -97,10 +127,13 @@ async def get_session_status(
         SessionStatus.FAILED: "Processing failed. Please try again."
     }
     
+    # Convert relative URLs to absolute URLs
+    output_image_url = build_absolute_url(request, session.output_image_url)
+    
     return TryOnSessionStatusResponse(
         id=session.id,
         status=session.status,
-        output_image_url=session.output_image_url,
+        output_image_url=output_image_url,
         error_reason=session.error_reason,
         progress_message=progress_messages.get(session.status)
     )
@@ -109,6 +142,7 @@ async def get_session_status(
 @router.get("/sessions/{session_id}/details", response_model=TryOnSessionResponse)
 async def get_session_details(
     session_id: uuid.UUID,
+    request: Request,
     db: Session = Depends(get_db)
 ):
     """Get full details of a session (for debugging/admin)"""
@@ -117,4 +151,10 @@ async def get_session_details(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     
-    return session
+    # Convert relative URLs to absolute URLs
+    response_data = TryOnSessionResponse.model_validate(session)
+    response_data.user_image_url = build_absolute_url(request, session.user_image_url)
+    response_data.garment_image_url = build_absolute_url(request, session.garment_image_url)
+    response_data.output_image_url = build_absolute_url(request, session.output_image_url)
+    
+    return response_data
