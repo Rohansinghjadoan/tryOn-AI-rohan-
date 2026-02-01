@@ -1,0 +1,44 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\cashh\\Desktop\\tryOn-AI\\backend']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [7328] using WatchFiles
+2026-02-01 12:30:13,145 - app.main - INFO - ============================================================
+2026-02-01 12:30:13,145 - app.main - INFO - TryOnAI Backend - Database Initialization
+2026-02-01 12:30:13,145 - app.main - INFO - ============================================================
+2026-02-01 12:30:13,145 - app.database - INFO - Attempting PostgreSQL connection: localhost:5432/tryonai
+2026-02-01 12:30:13,208 - app.database - ERROR - PostgreSQL connection failed
+2026-02-01 12:30:13,208 - app.database - ERROR -    Error: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-02-01 12:30:13,208 - app.database - ERROR -    DATABASE_URL: postgresql://postgres:postgres@localhost:5432/tryonai
+2026-02-01 12:30:13,208 - app.database - WARNING - 
+2026-02-01 12:30:13,208 - app.database - WARNING - How to fix:
+2026-02-01 12:30:13,208 - app.database - WARNING -    1. Ensure PostgreSQL is running: 'pg_ctl status' or check Windows Services
+2026-02-01 12:30:13,208 - app.database - WARNING -    2. Verify credentials in .env or DATABASE_URL
+2026-02-01 12:30:13,208 - app.database - WARNING -    3. Check connection string format:
+2026-02-01 12:30:13,208 - app.database - WARNING -       postgresql://username:password@localhost:5432/database_name
+2026-02-01 12:30:13,208 - app.database - WARNING -    4. For Windows, default user is usually 'postgres'
+2026-02-01 12:30:13,208 - app.database - WARNING -    5. You may need to create the database first:
+2026-02-01 12:30:13,208 - app.database - WARNING -       psql -U postgres -c 'CREATE DATABASE tryonai;'
+2026-02-01 12:30:13,208 - app.database - WARNING - 
+2026-02-01 12:30:13,208 - app.database - WARNING - Falling back to SQLite for local development...
+2026-02-01 12:30:13,224 - app.database - WARNING - WARNING: SQLite enabled - DEVELOPMENT ONLY
+2026-02-01 12:30:13,224 - app.database - WARNING -    Database file: ./dev.db
+2026-02-01 12:30:13,224 - app.database - WARNING -    This is NOT suitable for production!
+2026-02-01 12:30:13,224 - app.database - WARNING -    Fix PostgreSQL connection for production use.
+2026-02-01 12:30:13,224 - app.database - WARNING - 
+2026-02-01 12:30:13,224 - app.main - INFO - Upload directory ready: ./uploads
+INFO:     Started server process [12180]
+INFO:     Waiting for application startup.
+2026-02-01 12:30:13,231 - app.main - INFO - ============================================================
+2026-02-01 12:30:13,231 - app.main - INFO - Starting TryOnAI API...
+2026-02-01 12:30:13,231 - app.main - INFO - ============================================================
+2026-02-01 12:30:13,231 - app.database - INFO - Creating database tables...
+2026-02-01 12:30:13,232 - app.database - INFO - Database tables initialized (sqlite)
+2026-02-01 12:30:13,232 - app.main - INFO - Background cleanup task started
+2026-02-01 12:30:13,232 - app.main - INFO - ============================================================
+2026-02-01 12:30:13,232 - app.main - INFO - TryOnAI API ready on http://0.0.0.0:8000
+2026-02-01 12:30:13,232 - app.main - INFO - API Docs: http://0.0.0.0:8000/api/docs
+2026-02-01 12:30:13,232 - app.main - INFO - Database: SQLITE
+2026-02-01 12:30:13,232 - app.main - INFO - ============================================================
+2026-02-01 12:30:13,233 - app.services.cleanup - WARNING - Database not initialized, skipping cleanup
+INFO:     Application startup complete.

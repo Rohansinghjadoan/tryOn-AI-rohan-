@@ -1,0 +1,36 @@
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+tryon_api.log
+
+# Database
+*.db
+*.sqlite
+
+# Environment
+.env
+.env.local
+
+# Uploads
+uploads/
+!uploads/.gitkeep
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
