@@ -27,6 +27,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
 
 # vercel
 .vercel
@@ -34,3 +35,24 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Backend (Python)
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+venv/
+env/
+ENV/
+backend/venv/
+backend/env/
+backend/*.log
+backend/tryon_api.log
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

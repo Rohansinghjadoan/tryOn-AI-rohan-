@@ -1,10 +1,23 @@
 # TryOnAI - AI Virtual Try-On Landing Page
 
-A professional B2B SaaS landing website for an AI Virtual Try-On tool targeting Indian fashion e-commerce brands.
+A professional B2B SaaS landing website + **production-grade backend** for an AI Virtual Try-On tool targeting Indian fashion e-commerce brands.
 
 ## Product Overview
 
 TryOnAI is a plug-and-play AI virtual try-on solution for D2C fashion brands selling sarees, kurtis, dresses, and apparel. Customers upload one full-body photo and see every clothing product on themselves while browsing the brand's website.
+
+## Architecture
+
+### Frontend (Next.js)
+Professional marketing landing page with interactive demo
+
+### Backend (FastAPI + PostgreSQL)
+Production-grade async session processing system with:
+- ✅ Session-based architecture (not blocking)
+- ✅ Background job processing
+- ✅ Auto-cleanup for privacy compliance
+- ✅ Full observability & logging
+- ✅ AI-agnostic design (plug-in ready)
 
 ## Features
 
@@ -19,31 +32,55 @@ TryOnAI is a plug-and-play AI virtual try-on solution for D2C fashion brands sel
 
 ## Getting Started
 
-### Prerequisites
+### Frontend Only
 
-- Node.js 18+ 
-- npm or yarn
-
-### Installation
-
-1. Install dependencies:
 ```bash
 npm install
-```
-
-2. Run the development server:
-```bash
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
+Open [http://localhost:3000](http://localhost:3000)
 
-### Build for Production
+### Full Stack (Frontend + Backend)
+
+**🎯 Quick Start (Easiest Way):**
 
 ```bash
-npm run build
-npm start
+# Backend (Terminal 1)
+cd backend
+start.bat  # Windows (or ./start.sh for Mac/Linux)
+
+# Frontend (Terminal 2)
+echo NEXT_PUBLIC_API_URL=http://localhost:8000/api > .env.local
+npm run dev
 ```
+
+**💡 Note:** Backend automatically falls back to SQLite if PostgreSQL is not configured!
+
+**Full Documentation:**
+- [Backend Setup Guide](BACKEND_SETUP.md) - Detailed setup instructions
+- [Architecture Overview](BACKEND_ARCHITECTURE.md) - System design
+- [Quick Start Testing](QUICK_START.md) - 5-minute test guide
+- [Database Fallback](DATABASE_FALLBACK_IMPLEMENTATION.md) - How SQLite fallback works
+
+### Database Configuration (Optional)
+
+The backend works out-of-the-box with SQLite for development. To use PostgreSQL:
+
+1. **Create Database:**
+   ```bash
+   psql -U postgres -c "CREATE DATABASE tryonai;"
+   ```
+
+2. **Configure Connection:**
+   ```bash
+   # Edit backend/.env
+   DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/tryonai
+   ```
+
+3. **Restart Backend** - will auto-detect PostgreSQL
+
+See [DATABASE_FALLBACK_IMPLEMENTATION.md](DATABASE_FALLBACK_IMPLEMENTATION.md) for troubleshooting.
 
 ## Project Structure
 
@@ -144,6 +181,7 @@ The project uses Tailwind CSS. Modify `tailwind.config.ts` to customize the desi
 
 ## Tech Stack
 
+### Frontend
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
@@ -151,6 +189,22 @@ The project uses Tailwind CSS. Modify `tailwind.config.ts` to customize the desi
 - **Theme**: next-themes
 - **Icons**: Lucide React
 - **Fonts**: Inter (Google Fonts)
+
+### Backend
+- **API**: FastAPI 0.115+
+- **Database**: PostgreSQL 14+ (with SQLite fallback for dev)
+- **ORM**: SQLAlchemy 2.0
+- **File Processing**: Pillow
+- **Rate Limiting**: SlowAPI
+- **Validation**: Pydantic v2
+- **Server**: Uvicorn
+
+### Backend Features
+- ✅ **Graceful Degradation**: Auto-fallback to SQLite if PostgreSQL fails
+- ✅ **Developer-Friendly**: Clear error messages with troubleshooting steps
+- ✅ **No Crash Startup**: Backend runs even with DB misconfiguration
+- ✅ **Health Monitoring**: `/api/health` endpoint shows database status
+- ✅ **Production-Ready**: Proper logging, error handling, and warnings
 
 ## Design Principles
 
@@ -188,3 +242,43 @@ This project is built for demonstration purposes.
 ## Contact
 
 For questions or support: hello@tryonai.com
+
+## License
+
+This project is built for demonstration purposes.
+
+---
+
+## Backend Architecture Highlights
+
+### Session-Based Processing
+```
+Upload → Session Created (instant) → Background Processing → Status Polling → Result
+```
+
+### Database Schema
+- `tryon_sessions` table with UUID primary keys
+- Status enum: created → processing → completed/failed
+- Auto-expiry for privacy compliance
+- Optimized indexes for queries
+
+### API Endpoints
+- `POST /api/tryon/sessions` - Create session + upload image
+- `GET /api/tryon/sessions/{id}` - Poll status
+- `GET /api/health` - Health check
+
+### Background Services
+- **Worker**: Async session processing (mock AI)
+- **Cleanup**: Hourly privacy compliance job
+- **Logging**: Full request/response tracking
+
+### Future AI Integration
+Replace mock worker with real AI model:
+```python
+# In backend/app/services/worker.py
+async def process_session(session_id):
+    result = await your_ai_model.process(input_image)
+    # API & DB stay unchanged
+```
+
+**See [BACKEND_ARCHITECTURE.md](BACKEND_ARCHITECTURE.md) for complete details.**
