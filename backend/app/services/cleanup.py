@@ -1,47 +1,43 @@
+"""Periodic cleanup of expired sessions and their files."""
+
+from __future__ import annotations
+
 import asyncio
-from datetime import datetime
-from app.database import SessionLocal
-from app.crud import get_expired_sessions, delete_session
-from app.services.storage import storage_service
-from app.config import settings
 import logging
+
+from app.config import settings
+from app.crud import delete_session, get_expired_sessions
+from app.database import SessionLocal
+from app.services.storage import storage_service
 
 logger = logging.getLogger(__name__)
 
 
-async def cleanup_expired_sessions():
-    """Background task to clean up expired sessions"""
+async def cleanup_expired_sessions() -> None:
+    """Long-running background coroutine — deletes expired sessions hourly."""
+    interval = settings.cleanup_interval_hours * 3600
+
     while True:
         try:
-            # Check if database is initialized
             if SessionLocal is None:
-                logger.warning("Database not initialized, skipping cleanup")
-                await asyncio.sleep(settings.cleanup_interval_hours * 3600)
+                logger.warning("Cleanup: database not ready, skipping cycle")
+                await asyncio.sleep(interval)
                 continue
-            
+
             db = SessionLocal()
-            
-            # Get expired sessions
-            expired = get_expired_sessions(db, limit=100)
-            
-            if expired:
-                logger.info(f"Found {len(expired)} expired sessions to clean up")
-                
-                for session in expired:
-                    # Delete associated files
+            try:
+                expired = get_expired_sessions(db, limit=100)
+                if expired:
+                    logger.info("Cleaning up %d expired session(s)", len(expired))
+                for s in expired:
                     storage_service.delete_session_files(
-                        session.input_image_url,
-                        session.output_image_url
+                        s.user_image_url, s.garment_image_url, s.output_image_url
                     )
-                    
-                    # Delete session from database
-                    delete_session(db, session.id)
-                    logger.info(f"Cleaned up expired session: {session.id}")
-            
-            db.close()
-        
-        except Exception as e:
-            logger.error(f"Error in cleanup task: {str(e)}")
-        
-        # Wait before next cleanup cycle
-        await asyncio.sleep(settings.cleanup_interval_hours * 3600)
+                    delete_session(db, s.id)
+            finally:
+                db.close()
+
+        except Exception as exc:
+            logger.error("Cleanup error: %s", exc, exc_info=True)
+
+        await asyncio.sleep(interval)

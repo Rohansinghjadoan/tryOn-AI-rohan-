@@ -1,10 +1,14 @@
+"""SQLAlchemy ORM models."""
+
 import enum
-from sqlalchemy import Column, String, DateTime, Text, Enum, Index
-from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime, timedelta
 import uuid
-from app.database import Base
+from datetime import datetime, timedelta
+
+from sqlalchemy import Column, DateTime, Enum, Index, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+
 from app.config import settings
+from app.database import Base
 
 
 class SessionStatus(str, enum.Enum):
@@ -19,25 +23,28 @@ class TryOnSession(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     user_token = Column(String(255), nullable=False, index=True)
-    user_image_url = Column(Text, nullable=False)  # Customer photo
-    garment_image_url = Column(Text, nullable=False)  # Product catalog image
+
+    # Image URLs (relative, e.g. /uploads/users/<uuid>_user.jpg)
+    user_image_url = Column(Text, nullable=False)
+    garment_image_url = Column(Text, nullable=False)
     output_image_url = Column(Text, nullable=True)
+
     status = Column(Enum(SessionStatus), default=SessionStatus.CREATED, nullable=False, index=True)
     error_reason = Column(Text, nullable=True)
+
     expires_at = Column(DateTime, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-    
-    # Keep old input_image_url for backward compatibility (will be same as user_image_url)
-    @property
-    def input_image_url(self):
-        return self.user_image_url
 
-    # Composite indexes for common queries
     __table_args__ = (
-        Index('idx_status_created', 'status', 'created_at'),
-        Index('idx_expires_at_status', 'expires_at', 'status'),
+        Index("idx_status_created", "status", "created_at"),
+        Index("idx_expires_status", "expires_at", "status"),
     )
+
+    # Backward-compat alias
+    @property
+    def input_image_url(self) -> str:
+        return self.user_image_url
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

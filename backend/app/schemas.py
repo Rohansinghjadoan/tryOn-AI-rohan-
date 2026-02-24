@@ -1,17 +1,42 @@
-from pydantic import BaseModel, Field
+"""Pydantic schemas for request / response validation."""
+
 from datetime import datetime
-from uuid import UUID
 from typing import Optional
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
 from app.models import SessionStatus
 
 
-# Request schemas
+# ---------------------------------------------------------------------------
+# Requests
+# ---------------------------------------------------------------------------
 class TryOnSessionCreate(BaseModel):
-    user_token: str = Field(..., min_length=1, max_length=255, description="Anonymous user identifier")
+    user_token: str = Field(..., min_length=1, max_length=255)
 
 
-# Response schemas
-class TryOnSessionResponse(BaseModel):
+# ---------------------------------------------------------------------------
+# Responses
+# ---------------------------------------------------------------------------
+class UploadResponse(BaseModel):
+    session_id: UUID
+    status: str
+    message: str
+
+
+class SessionStatusResponse(BaseModel):
+    id: UUID
+    status: SessionStatus
+    output_image_url: Optional[str] = None
+    error_reason: Optional[str] = None
+    progress_message: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SessionDetailResponse(BaseModel):
     id: UUID
     user_token: str
     status: SessionStatus
@@ -25,21 +50,3 @@ class TryOnSessionResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-class TryOnSessionStatusResponse(BaseModel):
-    id: UUID
-    status: SessionStatus
-    output_image_url: Optional[str] = None
-    error_reason: Optional[str] = None
-    progress_message: Optional[str] = None
-
-    class Config:
-        from_attributes = True
-
-
-# Upload response
-class UploadResponse(BaseModel):
-    session_id: UUID
-    status: str
-    message: str
