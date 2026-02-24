@@ -43,6 +43,7 @@ class SessionDetailResponse(BaseModel):
     user_image_url: Optional[str] = None
     garment_image_url: Optional[str] = None
     output_image_url: Optional[str] = None
+    garment_category: str = "upper_body"
     error_reason: Optional[str] = None
     created_at: datetime
     updated_at: datetime

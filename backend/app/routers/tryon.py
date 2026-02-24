@@ -23,8 +23,8 @@ router = APIRouter(prefix="/tryon", tags=["try-on"])
 # Helpers
 # ---------------------------------------------------------------------------
 PROGRESS_MESSAGES = {
-    SessionStatus.CREATED: "Session created, waiting for processing…",
-    SessionStatus.PROCESSING: "AI is processing your try-on…",
+    SessionStatus.CREATED: "Session created, queued for processing…",
+    SessionStatus.PROCESSING: "AI model is generating your try-on — this takes 1–2 minutes…",
     SessionStatus.COMPLETED: "Try-on completed successfully!",
     SessionStatus.FAILED: "Processing failed. Please try again.",
 }
@@ -49,15 +49,22 @@ async def create_tryon_session(
     user_image: UploadFile = File(..., description="User photo"),
     garment_image: UploadFile = File(..., description="Garment image"),
     user_token: str = Form(..., description="Anonymous user identifier"),
+    category: str = Form("upper_body", description="Garment category: upper_body, lower_body, dresses"),
     db: Session = Depends(get_db),
 ):
     """Upload two images and start an async try-on session."""
+    # Validate category
+    valid_categories = {"upper_body", "lower_body", "dresses"}
+    if category not in valid_categories:
+        raise HTTPException(status_code=400, detail=f"Invalid category. Must be one of: {', '.join(valid_categories)}")
+
     try:
         session = create_session(
             db,
             user_token=user_token,
             user_image_url="pending",
             garment_image_url="pending",
+            garment_category=category,
         )
 
         user_url = await storage_service.save_user_image(user_image, session.id)

@@ -19,7 +19,7 @@
 9. [File Storage](#9-file-storage)
 10. [Configuration & Environment](#10-configuration--environment)
 11. [Deployment Guide](#11-deployment-guide)
-12. [Future AI Integration](#12-future-ai-integration)
+12. [AI Integration (Gradio / HuggingFace)](#12-ai-integration-gradio--huggingface)
 
 ---
 
@@ -41,7 +41,7 @@
 │  • API client        │        │                                  │
 └──────────────────────┘        │  ┌────────────┐ ┌─────────────┐ │
                                 │  │  Worker     │ │  Cleanup    │ │
-                                │  │  (mock AI)  │ │  (hourly)   │ │
+                                │  │  (Gradio)  │ │  (hourly)   │ │
                                 │  └──────┬─────┘ └──────┬──────┘ │
                                 │         │              │        │
                                 │    ┌────▼──────────────▼────┐   │
@@ -129,7 +129,7 @@ tryonai/
     │   ├── services/
     │   │   ├── __init__.py
     │   │   ├── storage.py   ← Save / validate / delete images
-    │   │   ├── worker.py    ← Mock AI background processor
+    │   │   ├── worker.py    ← AI try-on via HuggingFace Gradio API
     │   │   └── cleanup.py   ← Hourly expired-session reaper
     │   │
     │   └── middleware/
@@ -291,8 +291,9 @@ main.py            ← wires everything together
        │                                            BackgroundTask ──►  worker
        │                                                                  │
  5. Poll every 2s                                        5a. set PROCESSING
-    GET /sessions/:id ──────────────►  return current     5b. sleep 3s (mock)
-       │                               status             5c. save output image
+    GET /sessions/:id ──────────────►  return current     5b. call HF Space AI
+       │                               status                 (~30-120s)
+       │                                                  5c. save output image
        │                                                  5d. set COMPLETED
        │◄────────────── { status: "processing" }              or FAILED
        │
@@ -429,14 +430,18 @@ Full session info (admin / debugging).
 BackgroundTask → worker.process_session(session_id)
   1. Open a fresh DB session
   2. Set status = PROCESSING
-  3. Sleep 3 s (mock AI)
-  4. 10 % chance → FAILED with random error message
-  5. 90 % chance → copy user photo as output → COMPLETED
-  6. Close DB session
+  3. Resolve absolute paths for user & garment images
+  4. Call HuggingFace Space (jallenjia/Change-Clothes-AI) via gradio_client
+     - Sends user image, garment image, category (upper_body/lower_body/dresses)
+     - Takes ~30–120 seconds
+  5. Copy AI output to uploads/outputs/
+  6. Set status = COMPLETED with output URL
+  7. On error → FAILED with error message
+  8. Close DB session
 ```
 
-**To plug in real AI:** replace step 3–5 with your model call.
-Everything else (API, DB, frontend) stays the same.
+The AI model runs on HuggingFace infrastructure — the backend simply
+orchestrates the call and stores the result.
 
 ### Cleanup (`services/cleanup.py`)
 
@@ -478,8 +483,7 @@ All config lives in `backend/.env` (loaded by Pydantic Settings).
 | `MAX_FILE_SIZE_MB`           | `10`                                   |                              |
 | `SESSION_EXPIRY_HOURS`       | `24`                                   | When files auto-delete       |
 | `CLEANUP_INTERVAL_HOURS`     | `1`                                    |                              |
-| `MOCK_AI_PROCESSING_SECONDS` | `3`                                    | Simulate AI latency          |
-| `MOCK_AI_FAILURE_RATE`       | `0.1`                                  | 10 % random failures         |
+| `HF_SPACE`                   | `jallenjia/Change-Clothes-AI`          | HuggingFace Space for AI     |
 | `RATE_LIMIT_PER_MINUTE`      | `10`                                   |                              |
 | `HOST`                       | `0.0.0.0`                              |                              |
 | `PORT`                       | `8000`                                 |                              |
@@ -513,26 +517,42 @@ vercel --prod
 
 ---
 
-## 12. Future AI Integration
+## 12. AI Integration (Gradio / HuggingFace)
 
-The architecture is **AI-agnostic by design**. The only file that needs
-changing is `backend/app/services/worker.py`:
+The try-on is powered by **jallenjia/Change-Clothes-AI** on HuggingFace Spaces,
+called via the `gradio_client` Python library.
+
+### How it works
 
 ```python
-# Current (mock)
-time.sleep(3)
-output_url = storage_service.save_output_image(session_id, source_path=session.user_image_url)
+from gradio_client import Client, handle_file
 
-# Future (real)
-result = your_model.try_on(
-    user_image=storage_service.get_path(session.user_image_url),
-    garment_image=storage_service.get_path(session.garment_image_url),
+client = Client("jallenjia/Change-Clothes-AI")
+result = client.predict(
+    dict={"background": handle_file(user_img_path), "layers": [], "composite": None},
+    garm_img=handle_file(garment_img_path),
+    garment_des="",
+    is_checked=True,
+    is_checked_crop=False,
+    denoise_steps=30,
+    seed=-1,
+    category="upper_body",   # or "lower_body" / "dresses"
+    api_name="/tryon",
 )
-output_url = storage_service.save_output_image(session_id, source_path=result.path)
+# result[0] = output image path, result[1] = masked image path
 ```
 
-**Nothing else changes** — the API contract, database schema, frontend polling,
-and cleanup logic all remain identical.
+### Performance
+
+- **Cold start:** ~60–120 s (if the Space has been idle)
+- **Warm call:** ~30–60 s
+- The frontend polls every 2 s for up to 4 minutes (120 attempts).
+
+### Swapping the model
+
+To use a different AI model, only edit `backend/app/services/worker.py`.
+The API contract, database, frontend polling, and cleanup all remain identical.
+Update `HF_SPACE` in `.env` if using a different HuggingFace Space.
 
 ---
 

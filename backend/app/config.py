@@ -18,9 +18,8 @@ class Settings(BaseSettings):
     session_expiry_hours: int = 24
     cleanup_interval_hours: int = 1
 
-    # Mock AI processing
-    mock_ai_processing_seconds: int = 3
-    mock_ai_failure_rate: float = 0.1
+    # HuggingFace Space for AI try-on
+    hf_space: str = "jallenjia/Change-Clothes-AI"
 
     # Security
     rate_limit_per_minute: int = 10

@@ -44,12 +44,14 @@ export class TryOnAPIClient {
   static async createSession(
     userImage: File,
     garmentImage: File,
-    userToken: string
+    userToken: string,
+    category: string = 'upper_body'
   ): Promise<TryOnSessionResponse> {
     const formData = new FormData();
     formData.append('user_image', userImage);
     formData.append('garment_image', garmentImage);
     formData.append('user_token', userToken);
+    formData.append('category', category);
 
     const response = await fetch(`${API_BASE_URL}/tryon/sessions`, {
       method: 'POST',
@@ -84,7 +86,7 @@ export class TryOnAPIClient {
   static async pollSessionStatus(
     sessionId: string,
     onProgress?: (status: SessionStatus) => void,
-    maxAttempts: number = 60,
+    maxAttempts: number = 120,
     intervalMs: number = 2000
   ): Promise<SessionStatus> {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {

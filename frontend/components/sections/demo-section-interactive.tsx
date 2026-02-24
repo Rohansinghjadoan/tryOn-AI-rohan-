@@ -9,6 +9,7 @@ import { TryOnAPIClient, SessionStatus } from "@/lib/api-client"
 export function DemoSection() {
   const [userImage, setUserImage] = useState<File | null>(null)
   const [garmentImage, setGarmentImage] = useState<File | null>(null)
+  const [category, setCategory] = useState<string>('upper_body')
   const [userPreviewUrl, setUserPreviewUrl] = useState<string | null>(null)
   const [garmentPreviewUrl, setGarmentPreviewUrl] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -78,7 +79,7 @@ export function DemoSection() {
       const userToken = TryOnAPIClient.generateUserToken()
 
       // Create session with both images
-      const response = await TryOnAPIClient.createSession(userImage, garmentImage, userToken)
+      const response = await TryOnAPIClient.createSession(userImage, garmentImage, userToken, category)
       setSessionId(response.session_id)
 
       // Poll for status
@@ -100,6 +101,7 @@ export function DemoSection() {
     setGarmentImage(null)
     setUserPreviewUrl(null)
     setGarmentPreviewUrl(null)
+    setCategory('upper_body')
     setSessionId(null)
     setStatus(null)
     setError(null)
@@ -226,6 +228,17 @@ export function DemoSection() {
                   <Upload className="h-4 w-4 mr-2" />
                   {garmentPreviewUrl ? 'Change' : 'Upload'}
                 </Button>
+
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  disabled={isProcessing}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="upper_body">Upper Body</option>
+                  <option value="lower_body">Lower Body</option>
+                  <option value="dresses">Dresses</option>
+                </select>
               </div>
 
               {/* Output Section */}
@@ -257,7 +270,7 @@ export function DemoSection() {
                   {isProcessing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing...
+                      AI Processing (~1-2 min)...
                     </>
                   ) : (
                     <>
@@ -309,7 +322,7 @@ export function DemoSection() {
 
             {/* Info */}
             <p className="text-xs text-center text-muted-foreground mt-6">
-              This demo uses mock AI processing. Upload both images to see the realistic session flow.
+              Powered by AI. Processing takes 1–2 minutes via a remote model. Upload both images and select a garment category to try.
             </p>
           </CardContent>
         </Card>

@@ -29,6 +29,9 @@ class TryOnSession(Base):
     garment_image_url = Column(Text, nullable=False)
     output_image_url = Column(Text, nullable=True)
 
+    # Garment category: upper_body, lower_body, dresses
+    garment_category = Column(String(20), default="upper_body", nullable=False)
+
     status = Column(Enum(SessionStatus), default=SessionStatus.CREATED, nullable=False, index=True)
     error_reason = Column(Text, nullable=True)
 

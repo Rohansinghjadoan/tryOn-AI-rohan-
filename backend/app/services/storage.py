@@ -79,27 +79,24 @@ class StorageService:
         return await self._save(file, self.garment_dir, session_id, "garment")
 
     # ------------------------------------------------------------------
-    # Output (mock)
+    # Output
     # ------------------------------------------------------------------
-    def save_output_image(self, session_id: uuid.UUID, source_path: Optional[str] = None) -> str:
-        """Generate / copy an output image. Replace with real AI later."""
-        filename = f"{session_id}_output.jpg"
+    def save_output_from_file(self, session_id: uuid.UUID, source_file_path: str) -> str:
+        """Copy an AI-generated output image from a local temp path into storage."""
+        src = Path(source_file_path)
+        ext = src.suffix.lstrip(".") or "png"
+        filename = f"{session_id}_output.{ext}"
         out_path = self.output_dir / filename
-
-        if source_path:
-            # Strip leading /uploads/ to get the relative part
-            rel = source_path.lstrip("/")
-            if rel.startswith("uploads/"):
-                rel = rel[len("uploads/"):]
-            src = self.upload_dir / rel
-            if src.exists():
-                shutil.copy2(src, out_path)
-            else:
-                Image.new("RGB", (512, 512), color="lightgray").save(out_path)
-        else:
-            Image.new("RGB", (512, 512), color="lightgray").save(out_path)
-
+        shutil.copy2(src, out_path)
+        logger.info("Saved output for session %s -> %s", session_id, out_path)
         return f"/uploads/outputs/{filename}"
+
+    def get_absolute_path(self, relative_url: str) -> Path:
+        """Resolve a relative /uploads/... URL to an absolute filesystem path."""
+        rel = relative_url.lstrip("/")
+        if rel.startswith("uploads/"):
+            rel = rel[len("uploads/"):]
+        return self.upload_dir / rel
 
     # ------------------------------------------------------------------
     # Cleanup

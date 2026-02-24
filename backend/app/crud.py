@@ -17,11 +17,13 @@ def create_session(
     user_token: str,
     user_image_url: str,
     garment_image_url: str,
+    garment_category: str = "upper_body",
 ) -> TryOnSession:
     row = TryOnSession(
         user_token=user_token,
         user_image_url=user_image_url,
         garment_image_url=garment_image_url,
+        garment_category=garment_category,
         status=SessionStatus.CREATED,
     )
     db.add(row)
