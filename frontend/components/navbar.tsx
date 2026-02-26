@@ -45,7 +45,7 @@ export function Navbar() {
               Features
             </Link>
             <Link
-              href="#demo"
+              href="/demo"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               Demo

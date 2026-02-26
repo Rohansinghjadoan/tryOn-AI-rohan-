@@ -14,6 +14,9 @@ export function HeroSection() {
             Customers upload one photo and see every product on themselves while browsing your store.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button asChild size="lg" className="text-base bg-rose-500 hover:bg-rose-600">
+              <Link href="/demo">Try Live Demo</Link>
+            </Button>
             <Button asChild size="lg" className="text-base">
               <Link href="#contact">Request Pilot</Link>
             </Button>
